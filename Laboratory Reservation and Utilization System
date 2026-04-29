@@ -1,0 +1,88 @@
+Laboratory Reservation and Utilization System  
+* Laboratory Room / Equipment booking  
+* Conflict detection  
+* Utilization reports  
+* Schedule optimization 
+USER ROLES 
+1.1 Student / Faculty User 
+• Submit reservation requests  
+• Check real-time availability  
+• View reservation status  
+• Receive email notifications  
+1.2 Administrator / Laboratory Coordinator 
+• Approve or reject reservations  
+• View all schedules  
+• Monitor conflicts  
+• Access utilization reports and dashboard 
+REQUIREMENTS NEEDED 
+1. The system must allow users to: 
+• Select laboratory room or equipment  
+• Input reservation details:  
+o Name  
+o Email  
+o Section / Department  
+o Date  
+o Start time  
+o End time  
+o Purpose of use  
+• Submit reservation request via web interface  
+• Store all data in a centralized database 
+2. The system must enforce laboratory operating hours: 
+7:00 AM to 10:00 PM only 
+The system must: 
+• Reject reservations outside this time range  
+• Ensure:  
+o Start time ≥ 7:00 AM  
+o End time ≤ 10:00 PM  
+• Display error message: 
+“Reservation is only allowed from 7:00 AM to 10:00 PM.” 
+3. Real-Time Availability Checking 
+The system must: 
+• Check availability BEFORE submission  
+• Validate:  
+o Lab Room  
+o Date  
+o Time range  
+• Display instant feedback:  
+o “Available”  
+o “Not Available (Already Reserved)”  
+• Prevent submission if slot is unavailable 
+4. Conflict Detection 
+The system must: 
+• Detect overlapping schedules  
+• Compare:  
+o Same laboratory room  
+o Same date  
+o Overlapping time intervals  
+• Prevent double booking  
+• Automatically mark conflicting reservations as:  
+o Rejected or blocked 
+5. Approval Workflow System 
+The system must support: 
+• Initial status: Pending  
+• Admin-controlled status update:  
+o Approved  
+o Rejected  
+• Automatic email notification upon status change  
+6. Utilization Reports (DASHBOARD) 
+The system must generate reports showing: 
+• Total number of reservations  
+• Approved vs Rejected vs Pending requests  
+• Most used laboratory rooms  
+• Frequency of usage per time slot  
+• Daily, weekly, and monthly trends  
+7. Schedule Optimization Support 
+The system should: 
+• Identify available time slots  
+• Highlight peak usage hours  
+• Suggest less congested schedules  
+• Improve laboratory resource allocation 
+SYSTEM INTERFACE REQUIREMENTS 
+The system must include: 
+• Web-based reservation form (frontend)  
+• Real-time availability checker  
+• Admin approval interface  
+• Dashboard for utilization reports  
+• Status display (Available / Pending / Approved / Rejected) 
+
+

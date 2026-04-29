@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(cuid())
+  name         String
+  email        String        @unique
+  password     String
+  role         Role          @default(USER)
+  createdAt    DateTime      @default(now())
+  reservations Reservation[]
+}
+
+model Laboratory {
+  id           String        @id @default(cuid())
+  name         String        @unique
+  description  String?
+  capacity     Int?
+  status       LabStatus     @default(Available)
+  reservations Reservation[]
+}
+
+model Reservation {
+  id         String   @id @default(cuid())
+  userId     String
+  labId      String
+  date       String
+  startTime  String
+  endTime    String
+  purpose    String
+  status     Status   @default(PENDING)
+  adminNotes String?
+  createdAt  DateTime @default(now())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lab        Laboratory @relation(fields: [labId], references: [id], onDelete: Cascade)
+
+  @@index([labId, date])
+  @@index([userId])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Status {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum LabStatus {
+  Available
+  Unavailable
+  Maintenance
+}
