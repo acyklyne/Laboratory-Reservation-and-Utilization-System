@@ -39,7 +39,7 @@ const userNavItems = [
   { title: 'Home', icon: LayoutDashboard, url: '/' }  , //filler child
   { title: 'Dashboard', icon: LayoutDashboard, url: '/dashboard' },
   { title: 'Reserve Lab', icon: CalendarCheck, url: '/reserve' },
-  { title: 'My Reservations', icon: History, url: '/my-reservations' },
+  { title: 'Reservations', icon: History, url: '/my-reservations' },
   
 ];
 

@@ -14,6 +14,7 @@ interface Lab {
   description?: string;
   capacity?: number;
   status: string;
+  availabilityStatus?: string;
   imageUrl?: string;
 }
 
@@ -65,9 +66,13 @@ export default function ReservePage() {
                   data-ai-hint="laboratory equipment"
                 />
                 <div className="absolute top-3 right-3">
-                  <Badge className={lab.status === 'Available' ? 'bg-primary' : 'bg-destructive'}>
-                    {lab.status}
-                  </Badge>
+                  {lab.availabilityStatus === 'Available Today' ? (
+                    <Badge className="bg-primary">Available Today</Badge>
+                  ) : lab.availabilityStatus === 'Unavailable Today' ? (
+                    <Badge variant="outline" className="border-yellow-500 text-yellow-600 bg-yellow-50">Unavailable Today</Badge>
+                  ) : (
+                    <Badge className="bg-destructive">{lab.availabilityStatus || lab.status}</Badge>
+                  )}
                 </div>
               </div>
               <CardHeader className="pb-3">
@@ -94,7 +99,7 @@ export default function ReservePage() {
                         <CalendarCheck className="mr-2 h-4 w-4" /> Reserve Now
                       </>
                     ) : (
-                      'Unavailable'
+                      lab.availabilityStatus || lab.status || 'Unavailable'
                     )}
                   </Button>
                 </ReservationDialog>

@@ -2,16 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { FlaskConical, Loader2 } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { StatusBadge } from '@/components/reservation/StatusBadge';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
+import { FlaskConical, Loader2, Clock, CalendarIcon, User, FileText } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Reservation {
   id: string;
-  lab: { name: string };
-  user: { name: string };
+  lab: { id: string; name: string };
+  user: { id: string; name: string; email: string };
   date: string;
   startTime: string;
   endTime: string;
@@ -19,28 +21,41 @@ interface Reservation {
   status: string;
 }
 
-const labs = [
-  'Ergonomics Laboratory',
-  'Digital/Embedded Laboratory',
-  'Network Laboratory',
-  'Microbiology/Parasitology Lab',
-  'WSM Laboratory',
-  'Electronics Laboratory',
-  'ComLab1',
-  'ComLab2',
-  'ComLab3',
-  'ComLab4',
-  'ComLab5',
-];
+interface Lab {
+  id: string;
+  name: string;
+}
 
 export default function LiveSchedulePage() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedLab, setSelectedLab] = useState<string>('all');
   const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [labs, setLabs] = useState<Lab[]>([]);
   const [loading, setLoading] = useState(true);
+  const [labsLoading, setLabsLoading] = useState(true);
 
+  // Fetch labs for filter
+  useEffect(() => {
+    async function fetchLabs() {
+      try {
+        const res = await fetch('/api/labs', { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          setLabs(data);
+        }
+      } catch (error) {
+        console.error('Fetch labs error:', error);
+      } finally {
+        setLabsLoading(false);
+      }
+    }
+    fetchLabs();
+  }, []);
+
+  // Fetch reservations
   useEffect(() => {
     async function fetchReservations() {
+      setLoading(true);
       try {
         const params = new URLSearchParams();
         if (selectedLab !== 'all') params.set('labId', selectedLab);
@@ -49,7 +64,12 @@ export default function LiveSchedulePage() {
         const res = await fetch(`/api/reservations?${params.toString()}`, { credentials: 'include' });
         if (res.ok) {
           const data = await res.json();
-          setReservations(data);
+          // Sort by date then start time
+          const sorted = data.sort((a: Reservation, b: Reservation) => {
+            if (a.date !== b.date) return a.date.localeCompare(b.date);
+            return a.startTime.localeCompare(b.startTime);
+          });
+          setReservations(sorted);
         }
       } catch (error) {
         console.error('Fetch error:', error);
@@ -60,11 +80,17 @@ export default function LiveSchedulePage() {
     fetchReservations();
   }, [selectedDate, selectedLab]);
 
-  const timeSlots = [];
-  for (let hour = 7; hour < 22; hour++) {
-    timeSlots.push(`${hour.toString().padStart(2, '0')}:00`);
-    timeSlots.push(`${hour.toString().padStart(2, '0')}:30`);
-  }
+  const formatTime = (time: string) => {
+    const [h, m] = time.split(':').map(Number);
+    const suffix = h >= 12 ? 'PM' : 'AM';
+    const hour12 = h > 12 ? h - 12 : h === 0 ? 12 : h;
+    return `${hour12}:${m.toString().padStart(2, '0')} ${suffix}`;
+  };
+
+  // Filter computer labs for the dropdown
+  const computerLabs = labs.filter((lab) =>
+    lab.name.toLowerCase().includes('computer laboratory')
+  );
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -74,14 +100,16 @@ export default function LiveSchedulePage() {
           <p className="text-muted-foreground">View all laboratory bookings by date and lab.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Select value={selectedLab} onValueChange={setSelectedLab}>
-            <SelectTrigger className="w-[200px]">
+          <Select value={selectedLab} onValueChange={setSelectedLab} disabled={labsLoading}>
+            <SelectTrigger className="w-[220px]">
               <SelectValue placeholder="Filter by lab" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Laboratories</SelectItem>
-              {labs.map((lab) => (
-                <SelectItem key={lab} value={lab}>{lab}</SelectItem>
+              {computerLabs.map((lab) => (
+                <SelectItem key={lab.id} value={lab.id}>
+                  {lab.name}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -91,26 +119,41 @@ export default function LiveSchedulePage() {
       <div className="grid gap-6 lg:grid-cols-4">
         <Card className="lg:col-span-1 border-none shadow-sm">
           <CardHeader>
-            <CardTitle className="font-headline">Select Date</CardTitle>
+            <CardTitle className="font-headline text-lg">Select Date</CardTitle>
           </CardHeader>
           <CardContent>
             <Calendar
               mode="single"
               selected={selectedDate}
               onSelect={(date) => date && setSelectedDate(date)}
+              disabled={(date) => {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                return date < today;
+              }}
+              showOutsideDays={false}
               className="rounded-md border"
+              classNames={{
+                day_disabled: 'opacity-40 cursor-not-allowed bg-muted line-through',
+                day: 'h-9 w-9 p-0 font-normal',
+                day_today: 'font-semibold',
+              }}
             />
           </CardContent>
         </Card>
 
         <Card className="lg:col-span-3 border-none shadow-sm">
           <CardHeader>
-            <CardTitle className="font-headline">
-              Schedule for {format(selectedDate, 'PPP')}
-            </CardTitle>
-            <CardDescription>
-              {reservations.length} reservation(s) found
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="font-headline">
+                  Schedule for {format(selectedDate, 'PPP')}
+                </CardTitle>
+                <CardDescription>
+                  {reservations.length} reservation(s) found
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -123,41 +166,44 @@ export default function LiveSchedulePage() {
                 No reservations for this date.
               </div>
             ) : (
-              <div className="space-y-2">
-                {timeSlots.map((slot) => {
-                  const slotReservations = reservations.filter(
-                    (r) => r.startTime <= slot && r.endTime > slot
-                  );
-                  if (slotReservations.length === 0) return null;
-
-                  return (
-                    <div key={slot} className="flex items-start gap-4 p-3 rounded-lg border bg-secondary/20">
-                      <span className="text-sm font-mono text-muted-foreground w-16 pt-0.5">{slot}</span>
+              <div className="space-y-3">
+                {reservations.map((res) => (
+                  <div
+                    key={res.id}
+                    className="p-4 bg-white rounded-lg border shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => window.location.href = `/admin/reservations`}
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div className="flex-1 space-y-2">
-                        {slotReservations.map((res) => (
-                          <div key={res.id} className="p-3 bg-white rounded-lg border shadow-sm">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="font-semibold text-foreground">{res.lab.name}</p>
-                                <p className="text-sm text-muted-foreground">{res.user.name} • {res.purpose}</p>
-                              </div>
-                              <span className={`text-xs px-2 py-1 rounded-full ${
-                                res.status === 'APPROVED' ? 'bg-primary/10 text-primary' :
-                                res.status === 'PENDING' ? 'bg-yellow-500/10 text-yellow-600' :
-                                'bg-destructive/10 text-destructive'
-                              }`}>
-                                {res.status}
-                              </span>
-                            </div>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {res.startTime} - {res.endTime}
-                            </p>
+                        <div className="flex items-center gap-2">
+                          <FlaskConical className="h-4 w-4 text-primary" />
+                          <p className="font-semibold text-foreground">{res.lab.name}</p>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1.5">
+                            <User className="h-3.5 w-3.5" />
+                            <span>{res.user.name}</span>
                           </div>
-                        ))}
+                          <div className="flex items-center gap-1.5">
+                            <Clock className="h-3.5 w-3.5" />
+                            <span>{formatTime(res.startTime)} - {formatTime(res.endTime)}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <FileText className="h-3.5 w-3.5" />
+                            <span className="max-w-[200px] truncate">{res.purpose}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <CalendarIcon className="h-3 w-3" />
+                          <span>{res.date}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <StatusBadge status={res.status.toLowerCase()} />
                       </div>
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
               </div>
             )}
           </CardContent>

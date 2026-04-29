@@ -64,8 +64,8 @@ export default function MyReservationsPage() {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-left-4 duration-500">
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-headline font-bold text-foreground">My Reservations</h1>
-        <p className="text-muted-foreground">Track the status of your laboratory booking requests.</p>
+        <h1 className="text-3xl font-headline font-bold text-foreground">Reservations</h1>
+        <p className="text-muted-foreground">Track the status of laboratory booking requests.</p>
       </div>
 
       <Card className="border-none shadow-sm overflow-hidden">

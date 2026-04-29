@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { StatusBadge } from '@/components/reservation/StatusBadge';
-import { Check, X, Mail, Sparkles, Filter, Search, Loader2 } from 'lucide-react';
+import { Check, X, Trash2, Mail, Sparkles, Filter, Search, Loader2, AlertTriangle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import {
   Dialog,
@@ -38,6 +38,7 @@ export default function AdminReservationsPage() {
   const { toast } = useToast();
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [selectedRes, setSelectedRes] = useState<Reservation | null>(null);
+  const [deleteRes, setDeleteRes] = useState<Reservation | null>(null);
   const [adminNotes, setAdminNotes] = useState('');
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -68,6 +69,37 @@ export default function AdminReservationsPage() {
   const handleAction = async (res: Reservation, status: 'APPROVED' | 'REJECTED') => {
     setSelectedRes(res);
     setAdminNotes('');
+  };
+
+  const handleDelete = (res: Reservation) => {
+    setDeleteRes(res);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteRes) return;
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/reservations/${deleteRes.id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (res.ok) {
+        toast({
+          title: 'Reservation Deleted',
+          description: `Reservation for ${deleteRes.user.name} has been removed.`,
+        });
+        setDeleteRes(null);
+        fetchReservations();
+      } else {
+        const data = await res.json();
+        toast({ title: 'Delete Failed', description: data.error || 'Please try again', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Error', description: 'Unable to connect to server', variant: 'destructive' });
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const confirmAction = async (status: 'APPROVED' | 'REJECTED') => {
@@ -176,26 +208,36 @@ export default function AdminReservationsPage() {
                       <StatusBadge status={res.status.toLowerCase()} />
                     </TableCell>
                     <TableCell className="text-right">
-                      {res.status === 'PENDING' && (
-                        <div className="flex items-center justify-end gap-2">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 text-primary hover:bg-primary/10"
-                            onClick={() => handleAction(res, 'APPROVED')}
-                          >
-                            <Check className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                            onClick={() => handleAction(res, 'REJECTED')}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      )}
+                      <div className="flex items-center justify-end gap-2">
+                        {res.status === 'PENDING' && (
+                          <>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8 text-primary hover:bg-primary/10"
+                              onClick={() => handleAction(res, 'APPROVED')}
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                              onClick={() => handleAction(res, 'REJECTED')}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                          onClick={() => handleDelete(res)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -239,6 +281,28 @@ export default function AdminReservationsPage() {
               variant={selectedRes?.status === 'REJECTED' ? 'destructive' : 'default'}
             >
               {actionLoading ? 'Processing...' : `Confirm ${selectedRes?.status === 'REJECTED' ? 'Rejection' : 'Approval'}`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!deleteRes} onOpenChange={() => setDeleteRes(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 font-headline">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Confirm Deletion
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to permanently delete the reservation for {deleteRes?.user.name} on {deleteRes?.date}? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteRes(null)} disabled={actionLoading}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete} disabled={actionLoading}>
+              {actionLoading ? 'Deleting...' : 'Delete Reservation'}
             </Button>
           </DialogFooter>
         </DialogContent>

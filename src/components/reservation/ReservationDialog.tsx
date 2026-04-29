@@ -54,6 +54,7 @@ export function ReservationDialog({ lab, children }: { lab: Lab; children: React
   const [checking, setChecking] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
+  const [validEndTimes, setValidEndTimes] = useState<string[]>([]);
   const [unavailableDates, setUnavailableDates] = useState<Set<string>>(new Set());
   const [calendarMonth, setCalendarMonth] = useState(new Date());
   const { toast } = useToast();
@@ -181,6 +182,45 @@ export function ReservationDialog({ lab, children }: { lab: Lab; children: React
     fetchUnavailableDates();
   }, [open, lab.id, calendarMonth]);
 
+  // Compute valid end times based on start time and available slots
+  useEffect(() => {
+    if (!startTimeValue || availableSlots.length === 0) {
+      setValidEndTimes([]);
+      return;
+    }
+
+    const timeToMin = (t: string) => {
+      const [h, m] = t.split(':').map(Number);
+      return h * 60 + m;
+    };
+
+    const startMin = timeToMin(startTimeValue);
+    const valid: string[] = [];
+
+    for (const slot of availableSlots) {
+      if (slot.start <= startTimeValue) continue;
+      // Check if all slots from startTime to this slot's end are available
+      const endMin = timeToMin(slot.end);
+      let rangeAvailable = true;
+      for (let t = startMin; t < endMin; t += 30) {
+        const s = Math.floor(t / 60).toString().padStart(2, '0');
+        const m = (t % 60).toString().padStart(2, '0');
+        const e = Math.floor((t + 30) / 60).toString().padStart(2, '0');
+        const em = ((t + 30) % 60).toString().padStart(2, '0');
+        const found = availableSlots.find(x => x.start === `${s}:${m}` && x.end === `${e}:${em}`);
+        if (!found || !found.available) {
+          rangeAvailable = false;
+          break;
+        }
+      }
+      if (rangeAvailable) {
+        valid.push(slot.end);
+      }
+    }
+
+    setValidEndTimes(valid);
+  }, [startTimeValue, availableSlots]);
+
   const onSubmit = async (data: ReservationForm) => {
     setLoading(true);
     try {
@@ -266,6 +306,11 @@ export function ReservationDialog({ lab, children }: { lab: Lab; children: React
                         if (date) {
                           setValue('date', date);
                           setShowCalendar(false);
+                          // Check if date is fully booked
+                          const dateStr = format(date, 'yyyy-MM-dd');
+                          if (unavailableDates.has(dateStr)) {
+                            setAvailability({ available: false, message: 'This date is fully booked. Please choose another date.' });
+                          }
                         }
                       }}
                       initialFocus
@@ -278,9 +323,12 @@ export function ReservationDialog({ lab, children }: { lab: Lab; children: React
                       }}
                       month={calendarMonth}
                       onMonthChange={setCalendarMonth}
+                      showOutsideDays={false}
                       className="rounded-md border"
                       classNames={{
                         day_disabled: 'opacity-40 cursor-not-allowed bg-muted line-through',
+                        cell: 'h-9 w-9 text-center text-sm p-0 relative',
+                        day: 'h-9 w-9 p-0 font-normal',
                       }}
                     />
                     {unavailableDates.size > 0 && (
@@ -298,72 +346,63 @@ export function ReservationDialog({ lab, children }: { lab: Lab; children: React
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="startTime">Start Time</Label>
-                {availableSlots.filter(s => s.available).length > 0 ? (
-                  <Select
-                    value={startTimeValue}
-                    onValueChange={(time) => { setValue('startTime', time); setValue('endTime', ''); }}
-                    disabled={!dateValue || checking}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select start time" />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-48 overflow-y-auto">
-                      {availableSlots.filter(s => s.available).map(slot => (
-                        <SelectItem key={slot.start} value={slot.start}>
+                <Select
+                  value={startTimeValue}
+                  onValueChange={(time) => { setValue('startTime', time); setValue('endTime', ''); }}
+                  disabled={!dateValue || checking || availableSlots.length === 0}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={!dateValue ? 'Select date first' : checking ? 'Checking...' : 'Select start time'} />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-48 overflow-y-auto">
+                    {availableSlots.map(slot => (
+                      <SelectItem
+                        key={slot.start}
+                        value={slot.start}
+                        disabled={!slot.available}
+                        className={!slot.available ? 'opacity-50 cursor-not-allowed' : ''}
+                      >
+                        <span className="flex items-center gap-2">
                           {slot.start} - {slot.end}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <TimePicker
-                    value={startTimeValue || ''}
-                    onChange={(time) => { setValue('startTime', time); setValue('endTime', ''); }}
-                    disabled={!dateValue || checking}
-                  />
-                )}
+                          {!slot.available && <span className="text-xs text-destructive">(unavailable)</span>}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {errors.startTime && <p className="text-sm text-destructive">{errors.startTime.message}</p>}
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="endTime">End Time</Label>
-                {startTimeValue && (() => {
-                  // Build valid end times from contiguous available slots starting at/after startTime
-                  const validEndTimes: string[] = [];
-                  let seenStart = false;
-                  for (const slot of availableSlots) {
-                    if (slot.start < startTimeValue) continue;
-                    seenStart = true;
-                    if (!slot.available) break; // stop at first unavailable slot after start
-                    validEndTimes.push(slot.end);
-                  }
-                  if (validEndTimes.length === 0) {
-                    return (
-                      <TimePicker
-                        value={endTimeValue || ''}
-                        onChange={(time) => setValue('endTime', time)}
-                        disabled={!startTimeValue || checking}
-                      />
-                    );
-                  }
-                  return (
-                    <Select
-                      value={endTimeValue}
-                      onValueChange={(time) => setValue('endTime', time)}
-                      disabled={!startTimeValue}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select end time" />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-48 overflow-y-auto">
-                        {validEndTimes.map(endTime => (
-                          <SelectItem key={endTime} value={endTime}>
-                            {endTime}
+                <Select
+                  value={endTimeValue}
+                  onValueChange={(time) => setValue('endTime', time)}
+                  disabled={!startTimeValue || checking || availableSlots.length === 0}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={!startTimeValue ? 'Select start time first' : 'Select end time'} />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-48 overflow-y-auto">
+                    {availableSlots
+                      .filter(slot => slot.start >= (startTimeValue || '00:00'))
+                      .map(slot => {
+                        const isAvailable = validEndTimes.includes(slot.end);
+                        return (
+                          <SelectItem
+                            key={slot.end}
+                            value={slot.end}
+                            disabled={!isAvailable}
+                            className={!isAvailable ? 'opacity-50 cursor-not-allowed' : ''}
+                          >
+                            <span className="flex items-center gap-2">
+                              {slot.end}
+                              {!isAvailable && <span className="text-xs text-destructive">(unavailable)</span>}
+                            </span>
                           </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  );
-                })()}
+                        );
+                      })}
+                  </SelectContent>
+                </Select>
                 {errors.endTime && <p className="text-sm text-destructive">{errors.endTime.message}</p>}
               </div>
             </div>

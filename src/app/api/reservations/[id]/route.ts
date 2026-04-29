@@ -43,3 +43,31 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const user = getUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Only admins can delete reservations
+    if (user.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const { id } = await params;
+
+    const existing = await prisma.reservation.findUnique({ where: { id } });
+    if (!existing) {
+      return NextResponse.json({ error: 'Reservation not found' }, { status: 404 });
+    }
+
+    await prisma.reservation.delete({ where: { id } });
+
+    return NextResponse.json({ message: 'Reservation deleted successfully' });
+  } catch (error) {
+    console.error(`DELETE /api/reservations/[id] error:`, error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
