@@ -24,7 +24,7 @@ export default function ReservePage() {
   useEffect(() => {
     async function fetchLabs() {
       try {
-        const res = await fetch('/api/labs');
+        const res = await fetch('/api/labs', { credentials: 'include' });
         if (res.ok) {
           const data = await res.json();
           setLabs(data);

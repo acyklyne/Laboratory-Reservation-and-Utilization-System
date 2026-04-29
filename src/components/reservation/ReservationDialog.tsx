@@ -24,6 +24,19 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { TimePicker } from '@/components/ui/time-picker';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+type TimeSlot = {
+  start: string;
+  end: string;
+  available: boolean;
+};
 
 const reservationSchema = z.object({
   date: z.date({ required_error: 'Date is required' }),
@@ -40,6 +53,9 @@ export function ReservationDialog({ lab, children }: { lab: Lab; children: React
   const [availability, setAvailability] = useState<{ available: boolean; message: string } | null>(null);
   const [checking, setChecking] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
+  const [unavailableDates, setUnavailableDates] = useState<Set<string>>(new Set());
+  const [calendarMonth, setCalendarMonth] = useState(new Date());
   const { toast } = useToast();
 
   const { register, handleSubmit, watch, formState: { errors }, setValue, reset } = useForm<ReservationForm>({
@@ -50,46 +66,120 @@ export function ReservationDialog({ lab, children }: { lab: Lab; children: React
   const startTimeValue = watch('startTime');
   const endTimeValue = watch('endTime');
 
-  // Check availability when date or time changes
+  // Reset state when dialog closes
   useEffect(() => {
-    if (!dateValue || !startTimeValue || !endTimeValue) {
+    if (!open) {
+      reset();
       setAvailability(null);
+      setShowCalendar(false);
+      setAvailableSlots([]);
+      setUnavailableDates(new Set());
+    }
+  }, [open, reset]);
+
+  // Fetch available slots when date changes
+  useEffect(() => {
+    if (!dateValue) {
+      setAvailability(null);
+      setAvailableSlots([]);
+      setValue('startTime', '');
+      setValue('endTime', '');
       return;
     }
 
-    const checkAvailability = async () => {
+    const fetchAvailableSlots = async () => {
       setChecking(true);
       try {
         const formattedDate = format(dateValue, 'yyyy-MM-dd');
-        const res = await fetch(
-          `/api/availability?labId=${lab.id}&date=${formattedDate}`
-        );
+        const res = await fetch(`/api/availability?labId=${lab.id}&date=${formattedDate}`);
         const data = await res.json();
 
         if (data.error) {
           setAvailability({ available: false, message: data.error });
+          setAvailableSlots([]);
           return;
         }
 
-        // Check if the selected time slot is available
-        const slot = data.availableSlots?.find(
-          (s: any) => s.start === startTimeValue && s.end === endTimeValue
-        );
-
-        if (slot?.available) {
-          setAvailability({ available: true, message: 'Available!' });
-        } else {
-          setAvailability({ available: false, message: 'This slot is already reserved' });
-        }
+        const slots: TimeSlot[] = data.availableSlots || [];
+        setAvailableSlots(slots);
+        setAvailability(null);
       } catch {
         setAvailability({ available: false, message: 'Unable to check availability' });
+        setAvailableSlots([]);
       } finally {
         setChecking(false);
       }
     };
 
-    checkAvailability();
-  }, [dateValue, startTimeValue, endTimeValue, lab.id]);
+    fetchAvailableSlots();
+  }, [dateValue, lab.id, setValue]);
+
+  // Check if all 30-min slots within the selected range are available
+  useEffect(() => {
+    if (!dateValue || !startTimeValue || !endTimeValue || availableSlots.length === 0) {
+      setAvailability(null);
+      return;
+    }
+
+    // Generate all 30-min slot start times within the selected range
+    const timeToMinutes = (t: string) => {
+      const [h, m] = t.split(':').map(Number);
+      return h * 60 + m;
+    };
+
+    const startMin = timeToMinutes(startTimeValue);
+    const endMin = timeToMinutes(endTimeValue);
+
+    if (endMin <= startMin) {
+      setAvailability({ available: false, message: 'End time must be after start time' });
+      return;
+    }
+
+    // Check every 30-min slot that overlaps the selected range
+    let current = startMin;
+    let allAvailable = true;
+    while (current < endMin) {
+      const slotStart = `${Math.floor(current / 60).toString().padStart(2, '0')}:${(current % 60).toString().padStart(2, '0')}`;
+      const next = current + 30;
+      const slotEnd = `${Math.floor(next / 60).toString().padStart(2, '0')}:${(next % 60).toString().padStart(2, '0')}`;
+
+      const slot = availableSlots.find(s => s.start === slotStart && s.end === slotEnd);
+      if (!slot || !slot.available) {
+        allAvailable = false;
+        break;
+      }
+      current = next;
+    }
+
+    if (allAvailable) {
+      setAvailability({ available: true, message: 'Available!' });
+    } else {
+      setAvailability({ available: false, message: 'This slot is already reserved' });
+    }
+  }, [startTimeValue, endTimeValue, availableSlots, dateValue]);
+
+  // Fetch unavailable dates for the visible calendar month
+  useEffect(() => {
+    if (!open || !lab.id) return;
+
+    const fetchUnavailableDates = async () => {
+      try {
+        const year = calendarMonth.getFullYear();
+        const month = calendarMonth.getMonth() + 1;
+        const res = await fetch(
+          `/api/availability?labId=${lab.id}&month=${year}-${month.toString().padStart(2, '0')}`
+        );
+        const data = await res.json();
+        if (data.unavailableDates) {
+          setUnavailableDates(new Set(data.unavailableDates));
+        }
+      } catch (error) {
+        console.error('Failed to fetch unavailable dates:', error);
+      }
+    };
+
+    fetchUnavailableDates();
+  }, [open, lab.id, calendarMonth]);
 
   const onSubmit = async (data: ReservationForm) => {
     setLoading(true);
@@ -105,6 +195,7 @@ export function ReservationDialog({ lab, children }: { lab: Lab; children: React
           endTime: data.endTime,
           purpose: data.purpose,
         }),
+        credentials: 'include',
       });
 
       const result = await res.json();
@@ -137,7 +228,7 @@ export function ReservationDialog({ lab, children }: { lab: Lab; children: React
   };
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => { setOpen(isOpen); if (!isOpen) { reset(); setAvailability(null); setShowCalendar(false); } }}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
@@ -167,7 +258,7 @@ export function ReservationDialog({ lab, children }: { lab: Lab; children: React
                   {dateValue ? format(dateValue, 'PPP') : 'Pick a date'}
                 </Button>
                 {showCalendar && (
-                  <div className="absolute top-full left-0 mt-1 z-50 bg-popover border rounded-md shadow-md p-0">
+                  <div className="absolute top-full left-0 mt-1 z-50 bg-popover border rounded-md shadow-lg p-0">
                     <Calendar
                       mode="single"
                       selected={dateValue}
@@ -178,8 +269,25 @@ export function ReservationDialog({ lab, children }: { lab: Lab; children: React
                         }
                       }}
                       initialFocus
-                      disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                      disabled={(date) => {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        if (date < today) return true;
+                        const dateStr = format(date, 'yyyy-MM-dd');
+                        return unavailableDates.has(dateStr);
+                      }}
+                      month={calendarMonth}
+                      onMonthChange={setCalendarMonth}
+                      className="rounded-md border"
+                      classNames={{
+                        day_disabled: 'opacity-40 cursor-not-allowed bg-muted line-through',
+                      }}
                     />
+                    {unavailableDates.size > 0 && (
+                      <div className="px-3 pb-2 text-xs text-muted-foreground border-t">
+                        Greyed out dates are fully booked
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -190,18 +298,72 @@ export function ReservationDialog({ lab, children }: { lab: Lab; children: React
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="startTime">Start Time</Label>
-                <TimePicker
-                  value={startTimeValue || ''}
-                  onChange={(time) => setValue('startTime', time)}
-                />
+                {availableSlots.filter(s => s.available).length > 0 ? (
+                  <Select
+                    value={startTimeValue}
+                    onValueChange={(time) => { setValue('startTime', time); setValue('endTime', ''); }}
+                    disabled={!dateValue || checking}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select start time" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-48 overflow-y-auto">
+                      {availableSlots.filter(s => s.available).map(slot => (
+                        <SelectItem key={slot.start} value={slot.start}>
+                          {slot.start} - {slot.end}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <TimePicker
+                    value={startTimeValue || ''}
+                    onChange={(time) => { setValue('startTime', time); setValue('endTime', ''); }}
+                    disabled={!dateValue || checking}
+                  />
+                )}
                 {errors.startTime && <p className="text-sm text-destructive">{errors.startTime.message}</p>}
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="endTime">End Time</Label>
-                <TimePicker
-                  value={endTimeValue || ''}
-                  onChange={(time) => setValue('endTime', time)}
-                />
+                {startTimeValue && (() => {
+                  // Build valid end times from contiguous available slots starting at/after startTime
+                  const validEndTimes: string[] = [];
+                  let seenStart = false;
+                  for (const slot of availableSlots) {
+                    if (slot.start < startTimeValue) continue;
+                    seenStart = true;
+                    if (!slot.available) break; // stop at first unavailable slot after start
+                    validEndTimes.push(slot.end);
+                  }
+                  if (validEndTimes.length === 0) {
+                    return (
+                      <TimePicker
+                        value={endTimeValue || ''}
+                        onChange={(time) => setValue('endTime', time)}
+                        disabled={!startTimeValue || checking}
+                      />
+                    );
+                  }
+                  return (
+                    <Select
+                      value={endTimeValue}
+                      onValueChange={(time) => setValue('endTime', time)}
+                      disabled={!startTimeValue}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select end time" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-48 overflow-y-auto">
+                        {validEndTimes.map(endTime => (
+                          <SelectItem key={endTime} value={endTime}>
+                            {endTime}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  );
+                })()}
                 {errors.endTime && <p className="text-sm text-destructive">{errors.endTime.message}</p>}
               </div>
             </div>
@@ -245,7 +407,7 @@ export function ReservationDialog({ lab, children }: { lab: Lab; children: React
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" type="button" onClick={() => { setOpen(false); reset(); setAvailability(null); setShowCalendar(false); }}>Cancel</Button>
+            <Button variant="outline" type="button" onClick={() => setOpen(false)}>Cancel</Button>
             <Button type="submit" disabled={loading || (availability !== null && !availability.available)}>
               {loading ? 'Submitting...' : 'Submit Request'}
             </Button>
@@ -255,3 +417,4 @@ export function ReservationDialog({ lab, children }: { lab: Lab; children: React
     </Dialog>
   );
 }
+

@@ -29,11 +29,13 @@ export default function MyReservationsPage() {
   useEffect(() => {
     async function fetchReservations() {
       try {
-        const res = await fetch('/api/reservations');
+        const res = await fetch('/api/reservations', { credentials: 'include' });
         if (res.ok) {
           const data = await res.json();
           setReservations(data);
           setFiltered(data);
+        } else if (res.status === 401) {
+          console.error('Unauthorized: Please log in again');
         }
       } catch (error) {
         console.error('Fetch reservations error:', error);

@@ -29,7 +29,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     async function fetchReports() {
       try {
-        const res = await fetch('/api/admin/reports');
+        const res = await fetch('/api/admin/reports', { credentials: 'include' });
         if (res.ok) {
           const reportData = await res.json();
           setData(reportData);

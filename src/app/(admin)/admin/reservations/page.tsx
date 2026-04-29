@@ -49,10 +49,14 @@ export default function AdminReservationsPage() {
 
   async function fetchReservations() {
     try {
-      const res = await fetch('/api/reservations');
+      const res = await fetch('/api/reservations', { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         setReservations(data);
+      } else if (res.status === 401) {
+        console.error('Unauthorized: Please log in as admin');
+      } else {
+        console.error('Failed to fetch reservations:', res.status);
       }
     } catch (error) {
       console.error('Fetch reservations error:', error);
@@ -74,6 +78,7 @@ export default function AdminReservationsPage() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status, adminNotes }),
+        credentials: 'include',
       });
 
       if (res.ok) {

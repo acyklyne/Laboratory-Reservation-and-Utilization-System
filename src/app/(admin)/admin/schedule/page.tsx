@@ -46,7 +46,7 @@ export default function LiveSchedulePage() {
         if (selectedLab !== 'all') params.set('labId', selectedLab);
         if (selectedDate) params.set('date', format(selectedDate, 'yyyy-MM-dd'));
 
-        const res = await fetch(`/api/reservations?${params.toString()}`);
+        const res = await fetch(`/api/reservations?${params.toString()}`, { credentials: 'include' });
         if (res.ok) {
           const data = await res.json();
           setReservations(data);

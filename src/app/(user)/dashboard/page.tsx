@@ -33,7 +33,7 @@ export default function UserDashboard() {
     async function fetchData() {
       try {
         // Fetch user's reservations
-        const res = await fetch('/api/reservations');
+        const res = await fetch('/api/reservations', { credentials: 'include' });
         if (res.ok) {
           const data = await res.json();
           const reservations: Reservation[] = data;
@@ -49,7 +49,7 @@ export default function UserDashboard() {
         }
 
         // Get user info from cookie (decoded on server)
-        const meRes = await fetch('/api/auth/me');
+        const meRes = await fetch('/api/auth/me', { credentials: 'include' });
         if (meRes.ok) {
           const userData = await meRes.json();
           setUserName(userData.name || 'User');

@@ -32,7 +32,7 @@ export default function AdminManagementPage() {
   useEffect(() => {
     async function fetchCurrentUser() {
       try {
-        const res = await fetch('/api/auth/me');
+        const res = await fetch('/api/auth/me', { credentials: 'include' });
         if (res.ok) {
           const data = await res.json();
           setCurrentUser({ id: data.id });
@@ -47,7 +47,7 @@ export default function AdminManagementPage() {
   // Fetch admins
   const fetchAdmins = async () => {
     try {
-      const res = await fetch('/api/admin/admins');
+      const res = await fetch('/api/admin/admins', { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         setAdmins(data);
@@ -76,6 +76,7 @@ export default function AdminManagementPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password }),
+        credentials: 'include',
       });
 
       const data = await res.json();
@@ -110,6 +111,7 @@ export default function AdminManagementPage() {
     try {
       const res = await fetch(`/api/admin/admins/${admin.id}`, {
         method: 'DELETE',
+        credentials: 'include',
       });
 
       const data = await res.json();
