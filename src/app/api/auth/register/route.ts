@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, password, role } = body;
+    const { name, email, password, program } = body;
 
     if (!name || !email || !password) {
       return NextResponse.json(
@@ -30,7 +30,8 @@ export async function POST(request: NextRequest) {
         name,
         email,
         password: hashed,
-        role: role === 'ADMIN' ? Role.ADMIN : Role.USER,
+        program: program || null,
+        role: Role.USER,
       },
       select: { id: true, name: true, email: true, role: true },
     });

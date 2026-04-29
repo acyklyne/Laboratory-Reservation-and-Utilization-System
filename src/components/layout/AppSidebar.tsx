@@ -46,6 +46,7 @@ const adminNavItems = [
   { title: 'Manage Requests', icon: Layers, url: '/admin/reservations' },
   { title: 'Live Schedule', icon: Microscope, url: '/admin/schedule' },
   { title: 'Usage Reports', icon: ShieldCheck, url: '/admin/reports' },
+  { title: 'Admin Management', icon: Settings, url: '/admin/admin-management' },
 ];
 
 export function AppSidebar() {

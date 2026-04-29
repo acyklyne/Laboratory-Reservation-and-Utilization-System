@@ -17,9 +17,9 @@ import { useToast } from '@/hooks/use-toast';
 const registerSchema = z.object({
   name: z.string().min(2, 'Name is required'),
   email: z.string().email('Valid email required'),
+  program: z.string().min(1, 'Please select your program'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   confirmPassword: z.string().min(1, 'Please confirm your password'),
-  role: z.enum(['student', 'faculty'], { required_error: 'Please select a role' }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'Passwords do not match',
   path: ['confirmPassword'],
@@ -31,7 +31,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [role, setRole] = useState<string>('');
+  const [program, setProgram] = useState<string>('');
 
   const { register, handleSubmit, formState: { errors }, setValue } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
@@ -47,7 +47,7 @@ export default function RegisterPage() {
           name: data.name,
           email: data.email,
           password: data.password,
-          role: data.role === 'student' ? 'USER' : 'ADMIN',
+          program: data.program,
         }),
       });
 
@@ -81,7 +81,7 @@ export default function RegisterPage() {
         <Card className="border-none shadow-xl">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-headline">Get Started</CardTitle>
-            <CardDescription>Provide your details to register as a student or faculty</CardDescription>
+            <CardDescription>Provide your details to register as a student</CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit(onSubmit)}>
             <CardContent className="grid gap-4 sm:grid-cols-2">
@@ -92,21 +92,45 @@ export default function RegisterPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">University Email</Label>
-                <Input id="email" type="email" placeholder="john@university.edu" {...register('email')} />
+                <Input id="email" type="email" placeholder="john@pnc.edu.ph" {...register('email')} />
                 {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="role">Account Type</Label>
-                <Select onValueChange={(value: 'student' | 'faculty') => { setValue('role', value); setRole(value); }}>
-                  <SelectTrigger id="role">
-                    <SelectValue placeholder="Select role" />
+                <Label htmlFor="program">Program / Course</Label>
+                <Select onValueChange={(value: string) => { setValue('program', value); setProgram(value); }}>
+                  <SelectTrigger id="program">
+                    <SelectValue placeholder="Select your program" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="student">Student</SelectItem>
-                    <SelectItem value="faculty">Faculty</SelectItem>
+                  <SelectContent className="max-h-[300px]">
+                    <SelectItem value="group-business" disabled className="font-bold text-primary mt-1">CBAA</SelectItem>
+                    <SelectItem value="BS in Accountancy">BS in Accountancy</SelectItem>
+                    <SelectItem value="BS in Business Administration - Financial Management">BS in Business Administration - Major in Financial Management</SelectItem>
+                    <SelectItem value="BS in Business Administration - Marketing Management">BS in Business Administration - Major in Marketing Management</SelectItem>
+
+                    <SelectItem value="group-computing" disabled className="font-bold text-primary mt-1">CCS</SelectItem>
+                    <SelectItem value="BS in Information Technology">BS in Information Technology</SelectItem>
+                    <SelectItem value="BS in Computer Science">BS in Computer Science</SelectItem>
+
+                    <SelectItem value="group-education" disabled className="font-bold text-primary mt-1">COED</SelectItem>
+                    <SelectItem value="Bachelor of Elementary Education">Bachelor of Elementary Education</SelectItem>
+                    <SelectItem value="Bachelor of Secondary Education - English">Bachelor of Secondary Education - Major in English</SelectItem>
+                    <SelectItem value="Bachelor of Secondary Education - Filipino">Bachelor of Secondary Education - Major in Filipino</SelectItem>
+                    <SelectItem value="Bachelor of Secondary Education - Mathematics">Bachelor of Secondary Education - Major in Mathematics</SelectItem>
+                    <SelectItem value="Bachelor of Secondary Education - Social Sciences">Bachelor of Secondary Education - Major in Social Sciences</SelectItem>
+
+                    <SelectItem value="group-arts" disabled className="font-bold text-primary mt-1">CAS</SelectItem>
+                    <SelectItem value="BS in Psychology">BS in Psychology</SelectItem>
+
+                    <SelectItem value="group-engineering" disabled className="font-bold text-primary mt-1">COE</SelectItem>
+                    <SelectItem value="BS in Computer Engineering">BS in Computer Engineering</SelectItem>
+                    <SelectItem value="BS in Electronics Engineering">BS in Electronics Commuication Engineering</SelectItem>
+                    <SelectItem value="BS in Industrial Engineering">BS in Industrial Engineering</SelectItem>
+
+                    <SelectItem value="group-health" disabled className="font-bold text-primary mt-1">CHAS</SelectItem>
+                    <SelectItem value="BS in Nursing">BS in Nursing</SelectItem>
                   </SelectContent>
                 </Select>
-                {errors.role && <p className="text-sm text-destructive">{errors.role.message}</p>}
+                {errors.program && <p className="text-sm text-destructive">{errors.program.message}</p>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>

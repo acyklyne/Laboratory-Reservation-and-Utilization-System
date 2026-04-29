@@ -16,7 +16,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Lab } from '@/types/lab';
 import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
 import { CalendarIcon, Clock, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -24,6 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { TimePicker } from '@/components/ui/time-picker';
 
 const reservationSchema = z.object({
   date: z.date({ required_error: 'Date is required' }),
@@ -39,6 +39,7 @@ export function ReservationDialog({ lab, children }: { lab: Lab; children: React
   const [loading, setLoading] = useState(false);
   const [availability, setAvailability] = useState<{ available: boolean; message: string } | null>(null);
   const [checking, setChecking] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
   const { toast } = useToast();
 
   const { register, handleSubmit, watch, formState: { errors }, setValue, reset } = useForm<ReservationForm>({
@@ -136,7 +137,7 @@ export function ReservationDialog({ lab, children }: { lab: Lab; children: React
   };
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => { setOpen(isOpen); if (!isOpen) { reset(); setAvailability(null); } }}>
+    <Dialog open={open} onOpenChange={(isOpen) => { setOpen(isOpen); if (!isOpen) { reset(); setAvailability(null); setShowCalendar(false); } }}>
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
@@ -149,49 +150,58 @@ export function ReservationDialog({ lab, children }: { lab: Lab; children: React
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-6 py-6">
+            {/* Date Picker */}
             <div className="grid gap-2">
               <Label>Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      'w-full justify-start text-left font-normal h-11',
-                      !dateValue && 'text-muted-foreground'
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateValue ? format(dateValue, 'PPP') : <span>Pick a date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={dateValue}
-                    onSelect={(date) => date && setValue('date', date)}
-                    initialFocus
-                    disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                  />
-                </PopoverContent>
-              </Popover>
+              <div className="relative">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={cn(
+                    'w-full justify-start text-left font-normal h-11',
+                    !dateValue && 'text-muted-foreground'
+                  )}
+                  onClick={() => setShowCalendar(!showCalendar)}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateValue ? format(dateValue, 'PPP') : 'Pick a date'}
+                </Button>
+                {showCalendar && (
+                  <div className="absolute top-full left-0 mt-1 z-50 bg-popover border rounded-md shadow-md p-0">
+                    <Calendar
+                      mode="single"
+                      selected={dateValue}
+                      onSelect={(date) => {
+                        if (date) {
+                          setValue('date', date);
+                          setShowCalendar(false);
+                        }
+                      }}
+                      initialFocus
+                      disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                    />
+                  </div>
+                )}
+              </div>
               {errors.date && <p className="text-sm text-destructive">{errors.date.message}</p>}
             </div>
 
+            {/* Time Pickers */}
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="startTime">Start Time</Label>
-                <div className="relative">
-                  <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input id="startTime" type="time" className="pl-10 h-11" {...register('startTime')} />
-                </div>
+                <TimePicker
+                  value={startTimeValue || ''}
+                  onChange={(time) => setValue('startTime', time)}
+                />
                 {errors.startTime && <p className="text-sm text-destructive">{errors.startTime.message}</p>}
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="endTime">End Time</Label>
-                <div className="relative">
-                  <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input id="endTime" type="time" className="pl-10 h-11" {...register('endTime')} />
-                </div>
+                <TimePicker
+                  value={endTimeValue || ''}
+                  onChange={(time) => setValue('endTime', time)}
+                />
                 {errors.endTime && <p className="text-sm text-destructive">{errors.endTime.message}</p>}
               </div>
             </div>
@@ -217,6 +227,7 @@ export function ReservationDialog({ lab, children }: { lab: Lab; children: React
               </div>
             )}
 
+            {/* Purpose */}
             <div className="grid gap-2">
               <Label htmlFor="purpose">Purpose</Label>
               <Textarea
@@ -234,7 +245,7 @@ export function ReservationDialog({ lab, children }: { lab: Lab; children: React
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" type="button" onClick={() => { setOpen(false); reset(); setAvailability(null); }}>Cancel</Button>
+            <Button variant="outline" type="button" onClick={() => { setOpen(false); reset(); setAvailability(null); setShowCalendar(false); }}>Cancel</Button>
             <Button type="submit" disabled={loading || (availability !== null && !availability.available)}>
               {loading ? 'Submitting...' : 'Submit Request'}
             </Button>

@@ -58,18 +58,8 @@ export function Navbar() {
           <div className="bg-white p-1.5 rounded-lg text-primary">
             <FlaskConical className="h-6 w-6" />
           </div>
-          <span className="text-xl font-headline font-bold hidden sm:block">LabReserve</span>
+          <span className="text-l font-headline font-bold hidden sm:block">PnC Laboratory Reservation and Management System</span>
         </Link>
-      </div>
-
-      <div className="hidden md:flex flex-1 max-w-md mx-8">
-        <div className="relative w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60" />
-          <Input
-            placeholder="Search laboratories..."
-            className="bg-white/10 border-white/20 text-white placeholder:text-white/60 focus-visible:ring-white/30 h-9"
-          />
-        </div>
       </div>
 
       <div className="flex items-center gap-2">
@@ -84,21 +74,14 @@ export function Navbar() {
             <>
               <div className="hidden lg:block text-right">
                 <p className="text-sm font-medium leading-none">{user?.name || 'User'}</p>
-                <p className="text-xs text-white/70 mt-1">{user?.role === 'ADMIN' ? 'Administrator' : 'Student/Faculty'}</p>
+                <p className="text-xs text-white/70 mt-1 text-center">{user?.role === 'ADMIN' ? 'Administrator' : 'Student'} </p>
               </div>
               <Button variant="ghost" size="icon" className="rounded-full bg-white/10 text-white border border-white/20 h-9 w-9">
                 <User className="h-5 w-5" />
               </Button>
             </>
           )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleLogout}
-            className="text-white hover:bg-white/10 ml-2"
-          >
-            Logout
-          </Button>
+
         </div>
       </div>
     </header>
