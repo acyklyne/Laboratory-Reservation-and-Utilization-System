@@ -1,4 +1,4 @@
-Laboratory Reservation and Management System
+**Laboratory Reservation and Management System**
 
 The Laboratory Reservation and Utilization System for Pamantasan ng Cabuyao (PNC) is a web-based platform designed to streamline the scheduling, management, and monitoring of laboratory room usage across the institution.
 
