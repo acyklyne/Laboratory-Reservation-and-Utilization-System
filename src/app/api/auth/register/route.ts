@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
         program: program || null,
         role: Role.USER,
       },
-      select: { id: true, name: true, email: true, role: true },
+      select: { id: true, name: true, email: true, role: true, program: true },
     });
 
     const token = generateToken({ id: user.id, email: user.email, role: user.role });

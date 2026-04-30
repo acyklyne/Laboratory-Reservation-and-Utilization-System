@@ -22,6 +22,7 @@ import { Switch } from '@/components/ui/switch';
 interface UserInfo {
   name: string;
   role: string;
+  program?: string | null;
 }
 
 export function Navbar() {
@@ -88,7 +89,6 @@ export function Navbar() {
                 <Button variant="ghost" className="flex items-center gap-3 px-3 py-2 h-auto rounded-full bg-white/10 text-white border border-white/20 hover:bg-white/20">
                   <div className="hidden lg:block text-right">
                     <p className="text-sm font-medium leading-none">{user?.name || 'User'}</p>
-                    <p className="text-xs text-white/70 mt-0.5">{user?.role === 'ADMIN' ? 'Administrator' : 'Student'}</p>
                   </div>
                   <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
                     <User className="h-5 w-5" />
@@ -99,7 +99,7 @@ export function Navbar() {
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">{user?.name || 'User'}</p>
-                    <p className="text-xs text-muted-foreground">{user?.role === 'ADMIN' ? 'Administrator' : 'Student'}</p>
+                    <p className="text-xs text-muted-foreground truncate">{user?.role === 'ADMIN' ? 'Administrator' : user?.program || 'Student'}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />

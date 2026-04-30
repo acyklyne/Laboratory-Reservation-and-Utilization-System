@@ -69,7 +69,7 @@ export default function MyReservationsPage() {
       </div>
 
       <Card className="border-none shadow-sm overflow-hidden">
-        <CardHeader className="bg-white border-b flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <CardHeader className="bg-card border-b flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <CardTitle className="font-headline">Activity History</CardTitle>
             <CardDescription>All your lab requests in one place.</CardDescription>

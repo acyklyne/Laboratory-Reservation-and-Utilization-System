@@ -9,6 +9,7 @@ import {
   BarChart3,
   Layers,
   Microscope,
+  CalendarDays,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -36,8 +37,8 @@ const userNavItems = [
   { title: 'Home', icon: LayoutDashboard, url: '/' }  , //filler child
   { title: 'Dashboard', icon: LayoutDashboard, url: '/dashboard' },
   { title: 'Reserve Lab', icon: CalendarCheck, url: '/reserve' },
-  { title: 'Reservations', icon: History, url: '/my-reservations' },
-  
+  { title: 'My Reservations', icon: History, url: '/my-reservations' },
+  { title: 'Lab Schedule', icon: CalendarDays, url: '/all-reservations' },
 ];
 
 const adminNavItems = [
