@@ -68,20 +68,23 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-secondary p-4">
+    <div
+      className="min-h-screen flex items-center justify-center p-4"
+      style={{ backgroundImage: 'url(/images/Pncbg.png)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}
+    >
       <div className="w-full max-w-lg space-y-8">
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center p-3 rounded-xl bg-primary/10 text-primary mb-2">
+        <div className="text-center space-y-2 border-2 border-white/30 rounded-xl p-6 bg-black/20 backdrop-blur-sm">
+          <div className="inline-flex items-center justify-center p-3 rounded-xl bg-white/20 mb-2">
             <Image src="/images/pnc.ico" alt="PNC Logo" width={40} height={40} />
           </div>
-          <h1 className="text-3xl font-headline font-bold text-foreground">PNC iLab Reserve</h1>
-          <p className="text-muted-foreground">Create your reservation account</p>
+          <h1 className="text-3xl font-headline font-bold text-white">PNC iLab Reserve</h1>
+          <p className="text-white/70">Create your reservation account</p>
         </div>
 
-        <Card className="border-none shadow-xl">
+        <Card className="border-none shadow-xl bg-white/80 backdrop-blur-sm">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-headline">Get Started</CardTitle>
-            <CardDescription>Provide your details to register as a student</CardDescription>
+            <CardTitle className="text-2xl font-headline text-center">Get Started</CardTitle>
+            <CardDescription className="text-center">Provide your details to register as a student</CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit(onSubmit)}>
             <CardContent className="grid gap-4 sm:grid-cols-2">

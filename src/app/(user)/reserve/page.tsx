@@ -18,6 +18,22 @@ interface Lab {
   imageUrl?: string;
 }
 
+const labImageMap: Record<string, string> = {
+  'Computer Laboratory 1': '/images/Comlab1.jpg',
+  'Computer Laboratory 2': '/images/Comlab2.jpg',
+  'Computer Laboratory 3': '/images/Comlab3.jpg',
+  'Computer Laboratory 4': '/images/Comlab4.jpg',
+  'Computer Laboratory 5': '/images/Comlab5.jpg',
+  'Microbiology/Parasitology Lab': '/images/Pncbg.png',
+  'WSM Laboratory': '/images/WSM.jpg',
+  'Digital/Embedded Laboratory': '/images/DigitalEmbedded.jpg',
+  'Electronics Laboratory': '/images/Electronics.jpg',
+  'Ergonomics Laboratory': '/images/Ergonomics.jpg',
+  'Network Laboratory': '/images/Network.jpg',
+};
+
+const getLabImage = (labName: string) => labImageMap[labName] || '/images/Pncbg.png';
+
 export default function ReservePage() {
   const [labs, setLabs] = useState<Lab[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,7 +75,7 @@ export default function ReservePage() {
             <Card key={lab.id} className="overflow-hidden border-none shadow-sm hover:shadow-xl transition-all group">
               <div className="relative h-48 w-full overflow-hidden">
                 <Image
-                  src={lab.imageUrl || 'https://picsum.photos/seed/lab/600/400'}
+                  src={getLabImage(lab.name)}
                   alt={lab.name}
                   fill
                   className="object-cover group-hover:scale-110 transition-transform duration-500"
