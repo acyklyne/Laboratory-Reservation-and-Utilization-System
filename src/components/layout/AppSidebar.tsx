@@ -8,14 +8,11 @@ import {
   ShieldCheck,
   BarChart3,
   Layers,
-  LogOut,
   Microscope,
-
 } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -70,16 +67,6 @@ export function AppSidebar() {
     }
     fetchUser();
   }, []);
-
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      toast({ title: 'Logged out', description: 'Redirecting...' });
-      window.location.href = '/login';
-    } catch {
-      window.location.href = '/login';
-    }
-  };
 
   const isAdmin = user?.role === 'ADMIN';
 
@@ -140,32 +127,6 @@ export function AppSidebar() {
           </>
         )}
       </SidebarContent>
-
-      <SidebarFooter className="p-4">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Settings">
-              <Link href="#">
-                <Settings />
-                <span>Settings</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              tooltip="Logout"
-              className="text-destructive hover:text-destructive"
-              onClick={handleLogout}
-            >
-              <Link href="#">
-                <LogOut />
-                <span>Logout</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
     </Sidebar>
   );
 }

@@ -68,10 +68,11 @@ export default function RegisterPage() {
   };
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center p-4"
-      style={{ backgroundImage: 'url(/images/Pncbg.png)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}
-    >
+     <div
+    className="min-h-screen flex items-center p-4 md:pl-20 lg:pl-32"
+    style={{ backgroundImage: 'url(/images/Pncbg.png)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}
+  >
+
       <div className="w-full max-w-lg space-y-8">
         <div className="text-center space-y-2 border-2 border-white/30 rounded-xl p-6 bg-black/20 backdrop-blur-sm">
           <div className="inline-flex items-center justify-center p-3 rounded-xl bg-white/20 mb-2">

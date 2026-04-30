@@ -3,12 +3,21 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bell, User, Search, Menu, Loader2 } from 'lucide-react';
+import { Bell, User, Loader2, LogOut, Moon, Sun } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useToast } from '@/hooks/use-toast';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { useTheme } from 'next-themes';
+import { Switch } from '@/components/ui/switch';
 
 interface UserInfo {
   name: string;
@@ -18,6 +27,7 @@ interface UserInfo {
 export function Navbar() {
   const router = useRouter();
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
   const [user, setUser] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -46,10 +56,11 @@ export function Navbar() {
         router.push('/login');
       }
     } catch {
-      // Fallback: just redirect
       router.push('/login');
     }
   };
+
+  const isDarkMode = theme === 'dark';
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-primary text-white px-4 h-16 flex items-center justify-between">
@@ -72,17 +83,44 @@ export function Navbar() {
           {loading ? (
             <Loader2 className="h-5 w-5 animate-spin" />
           ) : (
-            <>
-              <div className="hidden lg:block text-right">
-                <p className="text-sm font-medium leading-none">{user?.name || 'User'}</p>
-                <p className="text-xs text-white/70 mt-1 text-center">{user?.role === 'ADMIN' ? 'Administrator' : 'Student'} </p>
-              </div>
-              <Button variant="ghost" size="icon" className="rounded-full bg-white/10 text-white border border-white/20 h-9 w-9">
-                <User className="h-5 w-5" />
-              </Button>
-            </>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="flex items-center gap-3 px-3 py-2 h-auto rounded-full bg-white/10 text-white border border-white/20 hover:bg-white/20">
+                  <div className="hidden lg:block text-right">
+                    <p className="text-sm font-medium leading-none">{user?.name || 'User'}</p>
+                    <p className="text-xs text-white/70 mt-0.5">{user?.role === 'ADMIN' ? 'Administrator' : 'Student'}</p>
+                  </div>
+                  <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
+                    <User className="h-5 w-5" />
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end">
+                <DropdownMenuLabel>
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{user?.name || 'User'}</p>
+                    <p className="text-xs text-muted-foreground">{user?.role === 'ADMIN' ? 'Administrator' : 'Student'}</p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="flex items-center justify-between cursor-pointer" onSelect={(e) => e.preventDefault()}>
+                  <div className="flex items-center gap-2">
+                    {isDarkMode ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+                    <span>Dark Mode</span>
+                  </div>
+                  <Switch
+                    checked={isDarkMode}
+                    onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
+                  />
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-destructive focus:text-destructive cursor-pointer" onClick={handleLogout}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  <span>Logout</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
-
         </div>
       </div>
     </header>
