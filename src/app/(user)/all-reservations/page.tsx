@@ -185,7 +185,7 @@ export default function AllReservationsPage() {
                       <Building2 className="h-5 w-5 text-primary" />
                       <h3 className="text-lg font-semibold">{labGroup.labName}</h3>
                       <Badge variant="secondary" className="ml-2">
-                        {labGroup.dates.reduce((acc, d) => acc + d.times.length, 0)} slots
+                        {labGroup.dates.reduce((acc, d) => acc + d.times.length, 0)} slots taken
                       </Badge>
                     </div>
                   </div>
@@ -196,7 +196,7 @@ export default function AllReservationsPage() {
                           <CalendarDays className="h-4 w-4 text-muted-foreground" />
                           <span className="font-medium text-sm">{dateGroup.date}</span>
                           <Badge variant="outline" className="ml-2 text-xs">
-                            {dateGroup.times.length} time slots
+                            {dateGroup.times.length} slots taken
                           </Badge>
                         </div>
                         <div className="flex flex-wrap gap-2 ml-6">
