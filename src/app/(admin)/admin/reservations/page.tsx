@@ -38,6 +38,7 @@ export default function AdminReservationsPage() {
   const { toast } = useToast();
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [selectedRes, setSelectedRes] = useState<Reservation | null>(null);
+  const [pendingAction, setPendingAction] = useState<'APPROVED' | 'REJECTED' | null>(null);
   const [deleteRes, setDeleteRes] = useState<Reservation | null>(null);
   const [adminNotes, setAdminNotes] = useState('');
   const [loading, setLoading] = useState(true);
@@ -66,8 +67,9 @@ export default function AdminReservationsPage() {
     }
   }
 
-  const handleAction = async (res: Reservation, status: 'APPROVED' | 'REJECTED') => {
+  const handleAction = (res: Reservation, status: 'APPROVED' | 'REJECTED') => {
     setSelectedRes(res);
+    setPendingAction(status);
     setAdminNotes('');
   };
 

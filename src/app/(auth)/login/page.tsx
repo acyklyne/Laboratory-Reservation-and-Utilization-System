@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { FlaskConical } from 'lucide-react';
+import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -59,10 +59,10 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-8">
         <div className="text-center space-y-2">
           <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-primary/10 text-primary mb-2 shadow-lg shadow-primary/20">
-            <FlaskConical className="h-10 w-10" />
+            <Image src="/images/pnc.ico" alt="PNC Logo" width={40} height={40} />
           </div>
-          <h1 className="text-3xl font-headline font-bold text-foreground">LabReserve Hub</h1>
-          <p className="text-muted-foreground">Modern Lab Reservation System</p>
+          <h1 className="text-3xl font-headline font-bold text-foreground">PNC iLab Reserve</h1>
+          <p className="text-muted-foreground">Laboratory Reservation and Management System</p>
         </div>
 
         <Card className="border-none shadow-xl bg-white/80 backdrop-blur-sm">

@@ -21,16 +21,24 @@ export async function GET(request: NextRequest) {
     // Total users
     const totalUsers = await prisma.user.count();
 
-    // Most used laboratories
+    // Most used laboratories with utilization %
     const labUsage = await prisma.$queryRaw<
-      { labName: string; count: number }[]
+      { labName: string; count: number; totalSlots: number }[]
     >`
-      SELECT l.name as labName, COUNT(r.id) as count
+      SELECT
+        l.name as labName,
+        COUNT(r.id) as count,
+        (SELECT COUNT(*) FROM Reservation WHERE labId = l.id AND date >= date('now', '-30 days')) as totalSlots
       FROM Laboratory l
-      LEFT JOIN Reservation r ON l.id = r.labId
+      LEFT JOIN Reservation r ON l.id = r.labId AND r.date >= date('now', '-30 days')
       GROUP BY l.id, l.name
       ORDER BY count DESC
     `;
+    const labUsageWithPct = labUsage.map((l) => {
+      const totalSlots = (30 * 15); // ~15 slots per day * 30 days = 450 possible slots
+      const pct = totalSlots > 0 ? Math.round((Number(l.count) / totalSlots) * 100) : 0;
+      return { name: l.labName, value: Number(l.count), utilization: pct };
+    });
 
     // Peak hours usage
     const peakHours = await prisma.$queryRaw<
@@ -66,6 +74,55 @@ export async function GET(request: NextRequest) {
       ORDER BY date
     `;
 
+    // Weekly trends (last 8 weeks)
+    const weeklyTrends = await prisma.$queryRaw<
+      { week: string; count: number }[]
+    >`
+      SELECT strftime('%Y-W%W', date) as week, COUNT(*) as count
+      FROM Reservation
+      WHERE date >= date('now', '-56 days')
+      GROUP BY week
+      ORDER BY week
+    `;
+    // Format week labels for display
+    const formatWeek = (weekStr: string) => {
+      const [year, weekNum] = weekStr.split('-W');
+      return `Week ${weekNum}`;
+    };
+    const weeklyData = weeklyTrends.map((w) => ({
+      week: formatWeek(w.week),
+      count: Number(w.count),
+    }));
+
+    // Monthly trends (last 6 months)
+    const monthlyTrends = await prisma.$queryRaw<
+      { month: string; count: number }[]
+    >`
+      SELECT strftime('%Y-%m', date) as month, COUNT(*) as count
+      FROM Reservation
+      GROUP BY month
+      ORDER BY month DESC
+      LIMIT 6
+    `;
+
+    // Approval status distribution for pie chart
+    const statusDistribution = [
+      { status: 'Approved', value: approved },
+      { status: 'Pending', value: pending },
+      { status: 'Rejected', value: rejected },
+    ];
+
+    // Time slot usage frequency
+    const timeSlotUsage = await prisma.$queryRaw<
+      { slot: string; count: number }[]
+    >`
+      SELECT SUBSTR(startTime, 1, 5) as slot, COUNT(*) as count
+      FROM Reservation
+      WHERE status != 'REJECTED'
+      GROUP BY slot
+      ORDER BY slot
+    `;
+
     return NextResponse.json({
       total,
       approved,
@@ -75,6 +132,13 @@ export async function GET(request: NextRequest) {
       labUsage: labUsage.map((l) => ({ name: l.labName, value: Number(l.count) })),
       peakHoursData,
       dailyTrends,
+      weeklyTrends,
+      monthlyTrends,
+      statusDistribution,
+      timeSlotUsage: timeSlotUsage.map((t) => ({
+        slot: `${t.slot}`,
+        count: Number(t.count),
+      })),
     });
   } catch (error) {
     console.error('GET /api/admin/reports error:', error);

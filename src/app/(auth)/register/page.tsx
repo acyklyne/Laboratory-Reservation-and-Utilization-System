@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FlaskConical } from 'lucide-react';
+import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -72,9 +72,9 @@ export default function RegisterPage() {
       <div className="w-full max-w-lg space-y-8">
         <div className="text-center space-y-2">
           <div className="inline-flex items-center justify-center p-3 rounded-xl bg-primary/10 text-primary mb-2">
-            <FlaskConical className="h-10 w-10" />
+            <Image src="/images/pnc.ico" alt="PNC Logo" width={40} height={40} />
           </div>
-          <h1 className="text-3xl font-headline font-bold text-foreground">LabReserve Hub</h1>
+          <h1 className="text-3xl font-headline font-bold text-foreground">PNC iLab Reserve</h1>
           <p className="text-muted-foreground">Create your reservation account</p>
         </div>
 

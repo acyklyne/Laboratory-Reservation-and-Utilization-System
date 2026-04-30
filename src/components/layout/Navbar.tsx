@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { FlaskConical, Bell, User, Search, Menu, Loader2 } from 'lucide-react';
+import { Bell, User, Search, Menu, Loader2 } from 'lucide-react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SidebarTrigger } from '@/components/ui/sidebar';
@@ -56,7 +57,7 @@ export function Navbar() {
         <SidebarTrigger className="md:hidden text-white hover:bg-white/10" />
         <Link href={user?.role === 'ADMIN' ? '/admin/dashboard' : '/dashboard'} className="flex items-center gap-2 group">
           <div className="bg-white p-1.5 rounded-lg text-primary">
-            <FlaskConical className="h-6 w-6" />
+            <Image src="/images/pnc.ico" alt="PNC Logo" width={24} height={24} />
           </div>
           <span className="text-l font-headline font-bold hidden sm:block">PnC Laboratory Reservation and Management System</span>
         </Link>

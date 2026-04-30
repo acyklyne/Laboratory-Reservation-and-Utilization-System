@@ -10,7 +10,7 @@ import {
   Layers,
   LogOut,
   Microscope,
-  FlaskConical,
+
 } from 'lucide-react';
 import {
   Sidebar,
