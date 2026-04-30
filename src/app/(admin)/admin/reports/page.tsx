@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { FileText, Download, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -30,7 +30,7 @@ export default function AdminReportsPage() {
   useEffect(() => {
     async function fetchReports() {
       try {
-        const res = await fetch('/api/admin/reports');
+        const res = await fetch('/api/admin/reports', { credentials: 'include' });
         if (res.ok) {
           const reportData = await res.json();
           setData(reportData);
@@ -77,7 +77,7 @@ export default function AdminReportsPage() {
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
                     <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
                     <YAxis fontSize={12} tickLine={false} axisLine={false} />
-                    <Tooltip content={<ChartTooltipContent />} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
                     <Bar dataKey="value" fill="#198754" radius={[4, 4, 0, 0]} barSize={40} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -106,7 +106,7 @@ export default function AdminReportsPage() {
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
                     <XAxis dataKey="hour" fontSize={12} tickLine={false} axisLine={false} />
                     <YAxis fontSize={12} tickLine={false} axisLine={false} />
-                    <Tooltip content={<ChartTooltipContent />} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
                     <Area type="monotone" dataKey="usage" stroke="#198754" fillOpacity={1} fill="url(#colorUsage)" strokeWidth={2} />
                   </AreaChart>
                 </ResponsiveContainer>
