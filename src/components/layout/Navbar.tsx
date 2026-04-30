@@ -71,7 +71,7 @@ export function Navbar() {
           <div className="bg-white p-1.5 rounded-lg text-primary">
             <Image src="/images/pnc.ico" alt="PNC Logo" width={24} height={24} />
           </div>
-          <span className="text-l font-headline font-bold hidden sm:block">PnC Laboratory Reservation and Management System</span>
+          <span className="text-l font-headline font-bold hidden sm:block">PNC iLab Reserve</span>
         </Link>
       </div>
 

@@ -34,7 +34,6 @@ interface UserInfo {
 }
 
 const userNavItems = [
-  { title: 'Home', icon: LayoutDashboard, url: '/' }  , //filler child
   { title: 'Dashboard', icon: LayoutDashboard, url: '/dashboard' },
   { title: 'Reserve Lab', icon: CalendarCheck, url: '/reserve' },
   { title: 'My Reservations', icon: History, url: '/my-reservations' },
@@ -71,13 +70,8 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
-      <SidebarHeader className="h-16 flex items-center px-4 md:hidden">
-        <span className="font-headline font-bold text-primary">LabReserve Hub</span>
-      </SidebarHeader>
-
-      <SidebarContent>
+      <SidebarContent className="pt-16">
         <SidebarGroup>
-          <SidebarGroupLabel>User Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {userNavItems.map((item) => (
