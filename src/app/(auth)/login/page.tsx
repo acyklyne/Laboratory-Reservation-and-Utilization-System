@@ -12,6 +12,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useToast } from '@/hooks/use-toast';
+import { useTheme } from 'next-themes';
+import { Sun, Moon } from 'lucide-react';
 
 const loginSchema = z.object({
   email: z.string().email('Valid email required'),
@@ -28,6 +30,7 @@ export default function LoginPage() {
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
   });
+  const { theme, setTheme } = useTheme();
 
   const onSubmit = async (data: LoginForm) => {
     setLoading(true);
@@ -56,9 +59,17 @@ export default function LoginPage() {
 
   return (
      <div
-    className="min-h-screen flex items-center p-4 md:pl-20 lg:pl-32"
+    className="min-h-screen flex items-center p-4 md:pl-20 lg:pl-32 relative"
     style={{ backgroundImage: 'url(/images/Pncbg.png)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}
   >
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-4 right-4 text-white hover:bg-white/20"
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+        >
+          {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+        </Button>
 
       <div className="w-full max-w-md space-y-8">
         <div className="text-center space-y-2 border-2 border-white/30 rounded-xl p-6 bg-black/20 backdrop-blur-sm">
