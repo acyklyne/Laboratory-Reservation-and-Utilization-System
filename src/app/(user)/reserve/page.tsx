@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Users, Microscope, CalendarCheck, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { ReservationDialog } from '@/components/reservation/ReservationDialog';
+import { LabScheduleDialog } from '@/components/LabScheduleDialog';
 
 interface Lab {
   id: string;
@@ -37,6 +38,8 @@ const getLabImage = (labName: string) => labImageMap[labName] || '/images/Pncbg.
 export default function ReservePage() {
   const [labs, setLabs] = useState<Lab[]>([]);
   const [loading, setLoading] = useState(true);
+  const [scheduleLab, setScheduleLab] = useState<Lab | null>(null);
+  const [reserveLab, setReserveLab] = useState<Lab | null>(null);
 
   useEffect(() => {
     async function fetchLabs() {
@@ -46,7 +49,6 @@ export default function ReservePage() {
           const data = await res.json();
           setLabs(data);
         } else {
-          // Fallback: fetch from the old constant or show error
           console.error('Failed to fetch labs');
         }
       } catch (error) {
@@ -57,6 +59,16 @@ export default function ReservePage() {
     }
     fetchLabs();
   }, []);
+
+  // Handle card click (except when clicking action buttons)
+  const handleCardClick = (lab: Lab, e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    // Don't open schedule dialog if clicking on any button or inside ReservationDialog trigger
+    if (target.closest('button') || target.closest('[data-reservation-trigger]')) {
+      return;
+    }
+    setScheduleLab(lab);
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -72,7 +84,11 @@ export default function ReservePage() {
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {labs.map((lab) => (
-            <Card key={lab.id} className="overflow-hidden border-none shadow-sm hover:shadow-xl transition-all group">
+            <Card 
+              key={lab.id} 
+              className="overflow-hidden border-none shadow-sm hover:shadow-xl transition-all group cursor-pointer"
+              onClick={(e) => handleCardClick(lab, e)}
+            >
               <div className="relative h-48 w-full overflow-hidden">
                 <Image
                   src={getLabImage(lab.name)}
@@ -91,10 +107,32 @@ export default function ReservePage() {
                   )}
                 </div>
               </div>
-              <CardHeader className="pb-3">
-                <CardTitle className="font-headline text-xl">{lab.name}</CardTitle>
-                <CardDescription className="line-clamp-2">{lab.description}</CardDescription>
-              </CardHeader>
+              
+              <div>
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <CardTitle className="font-headline text-xl flex items-center gap-2">
+                        {lab.name}
+                      </CardTitle>
+                      <CardDescription className="line-clamp-2 mt-1">{lab.description}</CardDescription>
+                    </div>
+                    {/* View Schedule button */}
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="shrink-0 hover:bg-transparent hover:text-current focus:ring-0"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setScheduleLab(lab);
+                      }}
+                    >
+                      View Schedule
+                    </Button>
+                  </div>
+                </CardHeader>
+              </div>
+              
               <CardContent className="pb-4">
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1.5">
@@ -107,9 +145,13 @@ export default function ReservePage() {
                   </div>
                 </div>
               </CardContent>
-              <CardFooter className="pt-0">
+              
+              <CardFooter className="pt-0" onClick={(e) => e.stopPropagation()}>
                 <ReservationDialog lab={lab}>
-                  <Button className="w-full" disabled={lab.status !== 'Available'}>
+                  <Button
+                    className="w-full"
+                    disabled={lab.status !== 'Available'}
+                  >
                     {lab.status === 'Available' ? (
                       <>
                         <CalendarCheck className="mr-2 h-4 w-4" /> Reserve Now
@@ -123,6 +165,15 @@ export default function ReservePage() {
             </Card>
           ))}
         </div>
+      )}
+
+      {/* Lab Schedule Dialog - opens when clicking card or View Schedule button */}
+      {scheduleLab && (
+        <LabScheduleDialog
+          lab={scheduleLab}
+          open={!!scheduleLab}
+          onOpenChange={(open) => !open && setScheduleLab(null)}
+        />
       )}
     </div>
   );

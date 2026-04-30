@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from "next-themes"
 
 export const metadata: Metadata = {
-  title: 'LabReserve Hub | Modern Laboratory Reservation System',
+  title: 'PnC iLab Reserve - Laboratory Reservation and Management System',
   description: 'Streamlined laboratory booking and utilization management for students and faculty.',
 };
 

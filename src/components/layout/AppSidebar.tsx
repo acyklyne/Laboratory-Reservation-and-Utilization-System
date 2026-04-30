@@ -38,13 +38,11 @@ const userNavItems = [
   { title: 'Dashboard', icon: LayoutDashboard, url: '/dashboard' },
   { title: 'Reserve Lab', icon: CalendarCheck, url: '/reserve' },
   { title: 'My Reservations', icon: History, url: '/my-reservations' },
-  { title: 'Lab Schedule', icon: CalendarDays, url: '/all-reservations' },
 ];
 
 const adminNavItems = [
   { title: 'Overview', icon: BarChart3, url: '/admin/dashboard' },
   { title: 'Manage Requests', icon: Layers, url: '/admin/reservations' },
-  { title: 'Live Schedule', icon: Microscope, url: '/admin/schedule' },
   { title: 'Usage Reports', icon: ShieldCheck, url: '/admin/reports' },
   { title: 'Admin Management', icon: Settings, url: '/admin/admin-management' },
 ];
