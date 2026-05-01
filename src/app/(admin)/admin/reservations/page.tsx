@@ -69,7 +69,7 @@ export default function AdminReservationsPage() {
 
   const handleAction = (res: Reservation, status: 'APPROVED' | 'REJECTED') => {
     setSelectedRes(res);
-    setPendingAction(status);
+    setPendingAction(status); // Store the action type separately
     setAdminNotes('');
   };
 
@@ -104,23 +104,24 @@ export default function AdminReservationsPage() {
     }
   };
 
-  const confirmAction = async (status: 'APPROVED' | 'REJECTED') => {
-    if (!selectedRes) return;
+  const confirmAction = async () => {
+    if (!selectedRes || !pendingAction) return; // Use pendingAction instead of guessing
     setActionLoading(true);
     try {
       const res = await fetch(`/api/reservations/${selectedRes.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, adminNotes }),
+        body: JSON.stringify({ status: pendingAction, adminNotes }),
         credentials: 'include',
       });
 
       if (res.ok) {
         toast({
-          title: `Reservation ${status === 'APPROVED' ? 'Approved' : 'Rejected'}`,
+          title: `Reservation ${pendingAction === 'APPROVED' ? 'Approved' : 'Rejected'}`,
           description: `Notification sent to ${selectedRes.user.email}.`,
         });
         setSelectedRes(null);
+        setPendingAction(null);
         setAdminNotes('');
         fetchReservations();
       } else {
@@ -141,6 +142,13 @@ export default function AdminReservationsPage() {
           r.lab.name.toLowerCase().includes(search.toLowerCase())
       )
     : reservations;
+
+  // Function to close the action dialog
+  const closeActionDialog = () => {
+    setSelectedRes(null);
+    setPendingAction(null);
+    setAdminNotes('');
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -249,15 +257,18 @@ export default function AdminReservationsPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={!!selectedRes} onOpenChange={() => { setSelectedRes(null); setAdminNotes(''); }}>
+      {/* Action Dialog (Approve/Reject) - FIXED */}
+      <Dialog open={!!selectedRes && !!pendingAction} onOpenChange={closeActionDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 font-headline">
               <Sparkles className="h-5 w-5 text-primary" />
-              Confirm Action
+              {pendingAction === 'APPROVED' ? 'Approve Reservation' : 'Reject Reservation'}
             </DialogTitle>
             <DialogDescription>
-              {selectedRes?.status === 'APPROVED' ? 'Approve' : 'Reject'} reservation for {selectedRes?.user.name}.
+              {pendingAction === 'APPROVED' 
+                ? `Confirm approval of reservation for ${selectedRes?.user.name}.` 
+                : `Confirm rejection of reservation for ${selectedRes?.user.name}.`}
             </DialogDescription>
           </DialogHeader>
 
@@ -267,27 +278,34 @@ export default function AdminReservationsPage() {
               <Textarea
                 value={adminNotes}
                 onChange={(e) => setAdminNotes(e.target.value)}
-                placeholder="Add any notes for the user..."
+                placeholder={pendingAction === 'APPROVED' 
+                  ? "Add any notes or instructions for the user..." 
+                  : "Provide a reason for rejection (optional)..."}
                 className="min-h-[100px]"
               />
             </div>
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setSelectedRes(null); setAdminNotes(''); }} disabled={actionLoading}>
+            <Button variant="outline" onClick={closeActionDialog} disabled={actionLoading}>
               Cancel
             </Button>
             <Button
-              onClick={() => confirmAction((selectedRes?.status === 'PENDING' ? 'APPROVED' : selectedRes?.status) as 'APPROVED' | 'REJECTED')}
+              onClick={confirmAction}
               disabled={actionLoading}
-              variant={selectedRes?.status === 'REJECTED' ? 'destructive' : 'default'}
+              variant={pendingAction === 'REJECTED' ? 'destructive' : 'default'}
             >
-              {actionLoading ? 'Processing...' : `Confirm ${selectedRes?.status === 'REJECTED' ? 'Rejection' : 'Approval'}`}
+              {actionLoading 
+                ? 'Processing...' 
+                : pendingAction === 'APPROVED' 
+                  ? 'Confirm Approval' 
+                  : 'Confirm Rejection'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
+      {/* Delete Dialog */}
       <Dialog open={!!deleteRes} onOpenChange={() => setDeleteRes(null)}>
         <DialogContent>
           <DialogHeader>
